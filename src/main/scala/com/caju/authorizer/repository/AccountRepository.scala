@@ -2,12 +2,7 @@ package com.caju.authorizer.repository
 
 import zio.*
 import zio.schema.*
-import zio.schema.DeriveSchema.*
-
-case class Account(id: String, balanceFood: BigDecimal, balanceMeal: BigDecimal, balanceCash: BigDecimal)
-
-object Account:
-	given Schema[Account] = DeriveSchema.gen[Account]
+import com.caju.authorizer.domain.Account
 
 trait AccountRepository:
   def register(user: Account): Task[String]

@@ -1,6 +1,7 @@
-package com.caju.authorizer.database
+package com.caju.authorizer.persistent
 
 import com.caju.authorizer.repository.*
+import com.caju.authorizer.domain.Account
 import io.getquill.*
 import io.getquill.jdbczio.Quill
 import zio.*

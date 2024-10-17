@@ -1,6 +1,7 @@
-package com.caju.authorizer.database
+package com.caju.authorizer.persistent
 
-import com.caju.authorizer.repository.{Mcc, MccRepository}
+import com.caju.authorizer.domain.Mcc
+import com.caju.authorizer.repository.MccRepository
 import io.getquill.*
 import io.getquill.jdbczio.Quill
 import zio.*

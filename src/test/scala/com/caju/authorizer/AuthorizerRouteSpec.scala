@@ -1,7 +1,8 @@
 package com.caju.authorizer
 
-import com.caju.authorizer.database.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
-import com.caju.authorizer.repository.{Account, AccountRepository, Transaction}
+import com.caju.authorizer.persistent.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
+import com.caju.authorizer.domain.{Transaction, Account}
+import com.caju.authorizer.repository.AccountRepository
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.{AuthorizerService, AuthorizerServiceImpl}
 import zio.*
@@ -14,7 +15,6 @@ import zio.test.*
 object AuthorizerRouteSpec extends ZIOSpecDefault:
 
 	/*
-			SELECT 1, 100 Food, 50 Meal, 101 Cash
 			SELECT 5411, 'Food', 'PADARIA DO ZE               BAGE BR' UNION
 			SELECT 5412, 'Food', 'UBER EATS                   SAO PAULO BR' UNION
 			SELECT 5811, 'Meal', 'UBER EATS                   VILA VELA BR' UNION

@@ -1,6 +1,6 @@
 package com.caju
 
-import com.caju.authorizer.database.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
+import com.caju.authorizer.persistent.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
 import com.caju.authorizer.repository.AccountRepository
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.AuthorizerServiceImpl

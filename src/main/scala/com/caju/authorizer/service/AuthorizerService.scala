@@ -1,11 +1,10 @@
 package com.caju.authorizer.service
 
 import com.caju.authorizer.repository.*
-import com.caju.authorizer.repository.Balance.{Food, Meal}
+import com.caju.authorizer.domain.Balance.{Food, Meal}
+import com.caju.authorizer.domain.{Account, Balance, MccCash, MccCode, Transaction}
 import com.caju.authorizer.service.AuthorizationStatus.*
 import zio.*
-
-case class CustomResponse()
 
 enum AuthorizationStatus(code: String) {
 	case Authorized extends AuthorizationStatus("00")
@@ -34,15 +33,7 @@ case class AuthorizerServiceImpl(
 	override def authorize(transaction: Transaction): Task[AuthorizationCode] =
 		for {
 			account  <- accountRepository.lookup(transaction.account)
-			fallback <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap {
-				case mcc@Some(_) => {
-					ZIO.succeed(mcc)
-				}
-				case None => {
-					mccRepository.lookup(transaction.mcc)
-				}
-			}
-			mcc      <- ZIO.succeed(fallback.getOrElse(new MccCash()))
+			mcc <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption).foldZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
 			update   <- debit(transaction, account.get, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
 			_        <- accountRepository.update(update._1)
 		} yield update._2

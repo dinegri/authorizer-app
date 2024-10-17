@@ -1,15 +1,7 @@
 package com.caju.authorizer.repository
 
+import com.caju.authorizer.domain.Mcc
 import zio.{Task, ZIO}
-
-enum Balance:
-	case Food, Meal, Cash
-
-case class Mcc(code: String = "", balanceType: String = "Cash", merchant: String = "")
-
-type MccCash = Mcc
-
-case class MccCode(code: String, balanceType: Balance, merchant: String)
 
 trait MccRepository {
     def lookup(code: String): Task[Option[Mcc]]

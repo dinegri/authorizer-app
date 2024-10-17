@@ -1,6 +1,6 @@
 package com.caju.authorizer.routes
 
-import com.caju.authorizer.repository.Transaction
+import com.caju.authorizer.domain.Transaction
 import com.caju.authorizer.routes.AuthorizationCode.encoder
 import com.caju.authorizer.service.AuthorizationStatus.*
 import com.caju.authorizer.service.{AuthorizationCode, AuthorizerService}
