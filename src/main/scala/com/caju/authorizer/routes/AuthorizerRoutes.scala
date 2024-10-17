@@ -1,13 +1,13 @@
 package com.caju.authorizer.routes
 
 import com.caju.authorizer.repository.Transaction
+import com.caju.authorizer.routes.AuthorizationCode.encoder
 import com.caju.authorizer.service.AuthorizationStatus.*
 import com.caju.authorizer.service.{AuthorizationCode, AuthorizerService}
 import zio.*
 import zio.http.*
-import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
-import com.caju.authorizer.routes.AuthorizationCode.encoder
 import zio.json.*
+import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
 
 object AuthorizationCode {
 	implicit val encoder: JsonEncoder[AuthorizationCode] =

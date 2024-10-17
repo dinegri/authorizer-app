@@ -90,8 +90,7 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 			.map(_.toString)
 
 	override def lookup(id: String): Task[Option[Account]] =
-		ctx
-			.run {
+		ctx.run {
 				quote {
 					query[AccountTable]
 						.filter(p => p.id == lift(id))

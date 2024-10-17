@@ -2,8 +2,8 @@ package com.caju.authorizer.service
 
 import com.caju.authorizer.repository.*
 import com.caju.authorizer.repository.Balance.{Food, Meal}
+import com.caju.authorizer.service.AuthorizationStatus.*
 import zio.*
-import AuthorizationStatus._
 
 case class CustomResponse()
 
@@ -16,8 +16,6 @@ enum AuthorizationStatus(code: String) {
 }
 
 case class AuthorizationCode(code: String)
-
-
 
 trait AuthorizerService {
 	def authorize(transaction: Transaction): Task[AuthorizationCode]

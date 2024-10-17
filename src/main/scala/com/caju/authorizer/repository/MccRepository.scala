@@ -1,6 +1,6 @@
 package com.caju.authorizer.repository
 
-import zio.{Task, ZIO, ZLayer}
+import zio.{Task, ZIO}
 
 enum Balance:
 	case Food, Meal, Cash

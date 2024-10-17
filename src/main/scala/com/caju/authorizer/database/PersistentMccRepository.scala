@@ -15,8 +15,7 @@ case class PersistentMccRepository(ds: DataSource) extends MccRepository:
 	import ctx.*
 
 	override def lookup(code: String): Task[Option[Mcc]] =
-		ctx
-			.run {
+		ctx.run {
 				quote {
 					query[MccTable]
 						.filter(p => p.code == lift(code))
@@ -27,8 +26,7 @@ case class PersistentMccRepository(ds: DataSource) extends MccRepository:
 			.map(_.headOption)
 
 	override def lookupByMerchantName(name: String): Task[Option[Mcc]] =
-		ctx
-			.run {
+		ctx.run {
 				quote {
 					query[MccTable]
 						.filter(p => p.merchant == lift(name))

@@ -1,7 +1,7 @@
 package com.caju.authorizer
 
 import com.caju.authorizer.database.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
-import com.caju.authorizer.repository.{AccountRepository, Transaction, Account}
+import com.caju.authorizer.repository.{Account, AccountRepository, Transaction}
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.{AuthorizerService, AuthorizerServiceImpl}
 import zio.*

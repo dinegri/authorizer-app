@@ -1,7 +1,6 @@
 package com.caju.authorizer.database
 
 import com.caju.authorizer.repository.{Transaction, TransactionRepository}
-import io.getquill.{Escape, H2ZioJdbcContext}
 import io.getquill.jdbczio.Quill
 import io.getquill.*
 import zio.*
@@ -13,7 +12,7 @@ case class TransactionTable(account: String, totalAmount: BigDecimal, mcc: Strin
 case class PersistentTransactionRepository(ds: DataSource) extends TransactionRepository:
 	val ctx = new H2ZioJdbcContext(Escape)
 
-	import ctx._
+	import ctx.*
 
 	override def register(user: Transaction): Task[Unit] = {
 		for
