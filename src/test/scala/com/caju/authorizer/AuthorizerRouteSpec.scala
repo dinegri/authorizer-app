@@ -103,9 +103,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		),
-		test("Se a MCC não puder ser mapeado para uma categoria de benefícios ou se o saldo da categoria fornecida não " +
-			"for suficiente para pagar a transação inteira, verifica o saldo de CASH e, se for suficiente, " +
-			"debita esse saldo.") {
+		test("Debita do Cash quando MCC não for encontrado") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
