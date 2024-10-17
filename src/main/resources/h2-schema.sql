@@ -29,4 +29,4 @@ INSERT INTO "MccTable" SELECT * FROM (
 								 SELECT 5811, 'Meal', 'PADARIA DO ZE               SAO PAULO BR' UNION
 								 SELECT 5812, 'Meal', 'PADARIA DO ZE               SAO PAULO BR' UNION
 							     SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR '
-							) x WHERE NOT exists(SELECT * FROM "MccTable");
+							) x WHERE NOT EXISTS(SELECT * FROM "MccTable");

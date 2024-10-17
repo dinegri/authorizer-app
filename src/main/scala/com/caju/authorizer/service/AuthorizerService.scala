@@ -69,7 +69,7 @@ case class AuthorizerServiceImpl(
 				else noBalance
 			}
 
-	private def hasBalance(balance: Long, amount: Long): Boolean = balance >= amount
+	private def hasBalance(balance: Double, amount: Double): Boolean = balance >= amount
 
 	private def noBalance: Task[AuthorizationCode]  = ZIO.succeed(AuthorizationCode(Rejected.toString))
 

@@ -7,7 +7,7 @@ import zio.*
 
 import javax.sql.DataSource
 
-case class AccountTable(id: String, balanceFood: Long, balanceMeal: Long, balanceCash: Long)
+case class AccountTable(id: String, balanceFood: Double, balanceMeal: Double, balanceCash: Double)
 
 case class PersistentAccountRepository(ds: DataSource) extends AccountRepository:
 	val ctx = new H2ZioJdbcContext(Escape)
@@ -27,7 +27,7 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 		yield id.toString
 	}.provide(ZLayer.succeed(ds))
 
-	override def updateFoodBalance(account: Account, balance: Long): Task[String]  =
+	override def updateFoodBalance(account: Account, balance: Double): Task[String]  =
 		ctx
 			.run {
 				quote {
@@ -40,7 +40,7 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 			.provide(ZLayer.succeed(ds))
 			.map(_.toString)
 
-	override def updateMealBalance(account: Account, balance: Long): Task[String]  =
+	override def updateMealBalance(account: Account, balance: Double): Task[String]  =
 		ctx
 			.run {
 				quote {
@@ -53,7 +53,7 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 			.provide(ZLayer.succeed(ds))
 			.map(_.toString)
 
-	override def updateCashBalance(account: Account, balance: Long): Task[String]  =
+	override def updateCashBalance(account: Account, balance: Double): Task[String]  =
 		ctx
 			.run {
 				quote {

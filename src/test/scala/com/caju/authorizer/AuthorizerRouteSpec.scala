@@ -20,7 +20,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 100, "5411", "PADARIA DO ZE               SAO PAULO BR")
+				transaction = Transaction("1", 100.00, "5411", "PADARIA DO ZE               SAO PAULO BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)
@@ -40,7 +40,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 10, "5811", "PADARIA DO ZE               SAO PAULO BR")
+				transaction = Transaction("1", 10.00, "5811", "PADARIA DO ZE               SAO PAULO BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)

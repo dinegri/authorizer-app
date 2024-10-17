@@ -9,7 +9,7 @@ import zio.*
 import java.util.UUID
 import javax.sql.DataSource
 
-case class TransactionTable(uuid: UUID, account: String, totalAmount: Long, mcc: String, merchant: String)
+case class TransactionTable(uuid: UUID, account: String, totalAmount: Double, mcc: String, merchant: String)
 
 case class PersistentTransactionRepository(ds: DataSource) extends TransactionRepository:
 	val ctx = new H2ZioJdbcContext(Escape)
