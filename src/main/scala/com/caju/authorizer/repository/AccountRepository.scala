@@ -16,6 +16,8 @@ trait AccountRepository:
 
   def update(account: Account): Task[Unit]
 
+  def delete(id: String): Task[Unit]
+
   def updateFoodBalance(user: Account, balance: BigDecimal): Task[String]
 
   def updateMealBalance(user: Account, balance: BigDecimal): Task[Unit]
@@ -31,6 +33,9 @@ object AccountRepository:
 
   def update(account: Account): ZIO[AccountRepository, Throwable, Unit] =
     ZIO.serviceWithZIO[AccountRepository](_.update(account))
+
+  def delete(id: String): ZIO[AccountRepository, Throwable, Unit] =
+    ZIO.serviceWithZIO[AccountRepository](_.delete(id))
 
   def updateFoodBalance(account: Account, balance: BigDecimal): ZIO[AccountRepository, Throwable, String] =
     ZIO.serviceWithZIO[AccountRepository](_.updateFoodBalance(account, balance))

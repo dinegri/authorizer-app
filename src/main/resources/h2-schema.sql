@@ -19,10 +19,6 @@ CREATE TABLE IF NOT EXISTS "MccTable"(
 	"merchant" VARCHAR(255)
 	);
 
-INSERT INTO "AccountTable" SELECT * FROM (
-											 SELECT 1, 100, 50, 101
-										 ) x WHERE NOT EXISTS(SELECT * FROM "AccountTable");
-
 INSERT INTO "MccTable" SELECT * FROM (
 										 SELECT 5411, 'Food', 'PADARIA DO ZE               BAGE BR' UNION
 										 SELECT 5412, 'Food', 'UBER EATS                   SAO PAULO BR' UNION

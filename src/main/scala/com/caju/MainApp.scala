@@ -11,7 +11,7 @@ object MainApp extends ZIOAppDefault:
   def run: ZIO[Any, Throwable, Nothing] =
     Server
       .serve(
-        AuthorizerRoutes()
+        AuthorizerRoutes(),
       )
       .provide(
         Server.defaultWithPort(8080),

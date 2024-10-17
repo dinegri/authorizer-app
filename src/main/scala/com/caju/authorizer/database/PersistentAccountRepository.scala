@@ -38,6 +38,18 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 		yield ()
 	}.provide(ZLayer.succeed(ds))
 
+	override def delete(id: String): Task[Unit] = {
+		for
+			_ <- ctx.run {
+				quote {
+					query[AccountTable]
+						.filter(p => p.id == lift(id))
+						.delete
+				}
+			}
+		yield ()
+	}.provide(ZLayer.succeed(ds))
+
 
 	override def updateFoodBalance(account: Account, balance: BigDecimal): Task[String]  =
 		ctx

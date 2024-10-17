@@ -1,7 +1,7 @@
 package com.caju.authorizer
 
 import com.caju.authorizer.database.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
-import com.caju.authorizer.repository.Transaction
+import com.caju.authorizer.repository.{AccountRepository, Transaction, Account}
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.{AuthorizerService, AuthorizerServiceImpl}
 import zio.*
@@ -19,9 +19,8 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			SELECT 5412, 'Food', 'UBER EATS                   SAO PAULO BR' UNION
 			SELECT 5811, 'Meal', 'UBER EATS                   VILA VELA BR' UNION
 			SELECT 5812, 'Meal', 'PADARIA DO ZE               SAO PAULO BR' UNION
-			SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR '
+			SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR'
 	*/
-
 	override def spec: Spec[Any, Any] = suite("AuthorizerService")(
 		test("Se o mcc for '5411', deve-se utilizar o saldo de FOOD") {
 			for {
@@ -42,14 +41,21 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentMccRepository.layer,
 			PersistentAccountRepository.layer,
 			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("1")
+				_ <- repo.register(Account("1", 100, 50, 101))
+			} yield ()
 		),
+
 		test("Se o mcc for '5811', deve-se utilizar o saldo de MEAL") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 10, "5811", "PADARIA DO ZE               SAO PAULO BR")
+				transaction = Transaction("2", 10, "5811", "PADARIA DO ZE               SAO PAULO BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)
@@ -62,14 +68,21 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentAccountRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("2")
+				_ <- repo.register(Account("2", 100, 50, 101))
+			} yield ()
 		),
+
 		test("Para quaisquer outros valores do mcc, deve-se utilizar o saldo de CASH") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 10, "5811", "UBER TRIP                   SAO PAULO BR")
+				transaction = Transaction("3", 10, "5811", "UBER TRIP                   SAO PAULO BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)
@@ -82,14 +95,21 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentAccountRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("3")
+				_ <- repo.register(Account("3", 100, 50, 101))
+			} yield ()
 		),
+
 		test("Para quaisquer outros valores do mcc, deve-se rejeitar a transação quando saldo para cash não for suficiente") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 110, "5811", "UBER TRIP                   SAO PAULO BR")
+				transaction = Transaction("4", 110, "5811", "UBER TRIP                   SAO PAULO BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)
@@ -102,14 +122,21 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentAccountRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("4")
+				_ <- repo.register(Account("4", 100, 50, 101))
+			} yield ()
 		),
-		test("Debita do Cash quando MCC não for encontrado") {
+
+		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
 				port <- ZIO.serviceWith[Server](_.port)
 				url = URL.root.port(port)
-				transaction = Transaction("1", 10, "5000", "UBER TRIP                   SAO PAULO BR")
+				transaction = Transaction("5", 50, "5000", "UBER EATS                   VILA VELA BR")
 				createResponse <- client(
 					Request.post(url / "transactions", Body.from[Transaction](transaction))
 				)
@@ -122,6 +149,39 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentAccountRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("5")
+				_ <- repo.register(Account("5", balanceFood = 100, balanceMeal = 50, balanceCash = 101))
+			} yield ()
+		),
+
+		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante e rejeito devido saldo insuficiente") {
+			for {
+				client <- ZIO.service[Client]
+				_ <- TestServer.addRoutes(AuthorizerRoutes())
+				port <- ZIO.serviceWith[Server](_.port)
+				url = URL.root.port(port)
+				transaction = Transaction("6", 102, "5000", "UBER EATS                   VILA VELA BR")
+				createResponse <- client(
+					Request.post(url / "transactions", Body.from[Transaction](transaction))
+				)
+				result <- createResponse.body.asString
+			} yield assertTrue(result == "{\"code\":\"51\"}")
+		}.provideSome[Client with Driver with AuthorizerService](
+			TestServer.layer,
+			Scope.default,
+			AuthorizerServiceImpl.layer,
+			PersistentAccountRepository.layer,
+			PersistentMccRepository.layer,
+			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			for {
+				repo <- ZIO.service[AccountRepository]
+				_ <- repo.delete("6")
+				_ <- repo.register(Account("6", balanceFood = 100, balanceMeal = 50, balanceCash = 101))
+			} yield ()
 		)
 	).provide(
 		ZLayer.succeed(Server.Config.default.onAnyOpenPort),
@@ -132,7 +192,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 		PersistentMccRepository.layer,
 		PersistentAccountRepository.layer,
 		PersistentTransactionRepository.layer
-	)
+	).provideLayerShared(PersistentAccountRepository.layer)
 
 	override def aspects: Chunk[TestAspectPoly] =
 		Chunk(TestAspect.timeout(60.seconds), TestAspect.timed)
