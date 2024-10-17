@@ -12,3 +12,4 @@ project/plugins/project/
 .DS_Store
 *.class
 *.log
+caju.mv.db
