@@ -6,27 +6,25 @@ import io.getquill.jdbczio.Quill
 import io.getquill.*
 import zio.*
 
-import java.util.UUID
 import javax.sql.DataSource
 
-case class TransactionTable(uuid: UUID, account: String, totalAmount: Double, mcc: String, merchant: String)
+case class TransactionTable(account: String, totalAmount: BigDecimal, mcc: String, merchant: String)
 
 case class PersistentTransactionRepository(ds: DataSource) extends TransactionRepository:
 	val ctx = new H2ZioJdbcContext(Escape)
 
 	import ctx._
 
-	override def register(user: Transaction): Task[String] = {
+	override def register(user: Transaction): Task[Unit] = {
 		for
-			id <- Random.nextUUID
 			_ <- ctx.run {
 				quote {
 					query[TransactionTable].insertValue {
-						lift(TransactionTable(id, user.account, user.totalAmount, user.mcc, user.merchant))
+						lift(TransactionTable(user.account, user.totalAmount, user.mcc, user.merchant))
 					}
 				}
 			}
-		yield id.toString
+		yield ()
 	}.provide(ZLayer.succeed(ds))
 
 object PersistentTransactionRepository:

@@ -4,7 +4,7 @@ import zio.*
 import zio.schema.*
 import zio.schema.DeriveSchema.*
 
-case class Account(id: String, balanceFood: Double, balanceMeal: Double, balanceCash: Double)
+case class Account(id: String, balanceFood: BigDecimal, balanceMeal: BigDecimal, balanceCash: BigDecimal)
 
 object Account:
 	given Schema[Account] = DeriveSchema.gen[Account]
@@ -14,11 +14,13 @@ trait AccountRepository:
 
   def lookup(id: String): Task[Option[Account]]
 
-  def updateFoodBalance(user: Account, balance: Double): Task[String]
+  def update(account: Account): Task[Unit]
 
-  def updateMealBalance(user: Account, balance: Double): Task[String]
+  def updateFoodBalance(user: Account, balance: BigDecimal): Task[String]
 
-  def updateCashBalance(user: Account, balance: Double): Task[String]
+  def updateMealBalance(user: Account, balance: BigDecimal): Task[Unit]
+
+  def updateCashBalance(user: Account, balance: BigDecimal): Task[String]
 
 object AccountRepository:
   def register(account: Account): ZIO[AccountRepository, Throwable, String] =
@@ -27,11 +29,14 @@ object AccountRepository:
   def lookup(id: String): ZIO[AccountRepository, Throwable, Option[Account]] =
     ZIO.serviceWithZIO[AccountRepository](_.lookup(id))
 
-  def updateFoodBalance(account: Account, balance: Double): ZIO[AccountRepository, Throwable, String] =
+  def update(account: Account): ZIO[AccountRepository, Throwable, Unit] =
+    ZIO.serviceWithZIO[AccountRepository](_.update(account))
+
+  def updateFoodBalance(account: Account, balance: BigDecimal): ZIO[AccountRepository, Throwable, String] =
     ZIO.serviceWithZIO[AccountRepository](_.updateFoodBalance(account, balance))
 
-  def updateMealBalance(account: Account, balance: Double): ZIO[AccountRepository, Throwable, String] =
+  def updateMealBalance(account: Account, balance: BigDecimal): ZIO[AccountRepository, Throwable, Unit] =
     ZIO.serviceWithZIO[AccountRepository](_.updateMealBalance(account, balance))
 
-  def updateCashBalance(account: Account, balance: Double): ZIO[AccountRepository, Throwable, String] =
+  def updateCashBalance(account: Account, balance: BigDecimal): ZIO[AccountRepository, Throwable, String] =
     ZIO.serviceWithZIO[AccountRepository](_.updateCashBalance(account, balance))

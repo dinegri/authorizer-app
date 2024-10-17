@@ -17,6 +17,8 @@ enum AuthorizationStatus(code: String) {
 
 case class AuthorizationCode(code: String)
 
+
+
 trait AuthorizerService {
 	def authorize(transaction: Transaction): Task[AuthorizationCode]
 }
@@ -33,7 +35,6 @@ case class AuthorizerServiceImpl(
 
 	override def authorize(transaction: Transaction): Task[AuthorizationCode] =
 		for {
-			_        <- transactionRepository.register(transaction)
 			account  <- accountRepository.lookup(transaction.account)
 			fallback <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap {
 				case mcc@Some(_) => {
@@ -44,42 +45,43 @@ case class AuthorizerServiceImpl(
 				}
 			}
 			mcc      <- ZIO.succeed(fallback.getOrElse(new MccCash()))
-			code     <- debit(transaction, account.get, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
-		} yield code
+			update   <- debit(transaction, account.get, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
+			_        <- accountRepository.update(update._1)
+		} yield update._2
 
-	private def debit(transaction: Transaction, account: Account, mcc: MccCode): Task[AuthorizationCode] =
+	private def debit(transaction: Transaction, account: Account, mcc: MccCode): Task[(Account, AuthorizationCode)] =
 		mcc.balanceType match
 			case Food => {
 				if (hasBalance(account.balanceFood, transaction.totalAmount))
 					debitBalance(account, transaction, Balance.Food)
 				else if (hasBalance(transaction.totalAmount, account.balanceCash))
 					debitBalance(account, transaction, Balance.Cash)
-				else noBalance
+				else noBalance(account)
 			}
 			case Meal => {
 				if (hasBalance(account.balanceMeal, transaction.totalAmount))
 					debitBalance(account, transaction, Balance.Meal)
 				else if (hasBalance(account.balanceCash, transaction.totalAmount))
 					debitBalance(account, transaction, Balance.Cash)
-				else noBalance
+				else noBalance(account)
 			}
 			case _ => {
 				if (hasBalance(account.balanceCash, transaction.totalAmount))
 					debitBalance(account, transaction, Balance.Cash)
-				else noBalance
+				else noBalance(account)
 			}
 
-	private def hasBalance(balance: Double, amount: Double): Boolean = balance >= amount
+	private def hasBalance(balance: BigDecimal, amount: BigDecimal): Boolean = balance >= amount
 
-	private def noBalance: Task[AuthorizationCode]  = ZIO.succeed(AuthorizationCode(Rejected.toString))
+	private def noBalance(account: Account): Task[(Account, AuthorizationCode)]  = ZIO.succeed(account, AuthorizationCode(Rejected.toString))
 
-	private def debitBalance(account: Account, transaction: Transaction, balance: Balance): Task[AuthorizationCode] = {
+	private def debitBalance(account: Account, transaction: Transaction, balance: Balance): Task[(Account, AuthorizationCode)] = {
 		val acc = balance match
-			case Balance.Food => accountRepository.updateFoodBalance(account,  account.balanceFood - transaction.totalAmount)
-			case Balance.Meal => accountRepository.updateMealBalance(account,  account.balanceMeal - transaction.totalAmount)
-			case Balance.Cash => accountRepository.updateCashBalance(account,  account.balanceCash - transaction.totalAmount)
+			case Balance.Food => Account(account.id, account.balanceFood - transaction.totalAmount, account.balanceMeal, account.balanceCash)
+			case Balance.Meal => Account(account.id, account.balanceFood, account.balanceMeal - transaction.totalAmount, account.balanceCash)
+			case Balance.Cash => Account(account.id, account.balanceFood, account.balanceMeal, account.balanceCash - transaction.totalAmount)
 
-		ZIO.succeed(AuthorizationCode(Authorized.toString))
+		ZIO.succeed(acc, AuthorizationCode(Authorized.toString))
 	}
 }
 

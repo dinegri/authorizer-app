@@ -7,7 +7,7 @@ import zio.*
 
 import javax.sql.DataSource
 
-case class AccountTable(id: String, balanceFood: Double, balanceMeal: Double, balanceCash: Double)
+case class AccountTable(id: String, balanceFood: BigDecimal, balanceMeal: BigDecimal, balanceCash: BigDecimal)
 
 case class PersistentAccountRepository(ds: DataSource) extends AccountRepository:
 	val ctx = new H2ZioJdbcContext(Escape)
@@ -16,18 +16,30 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 
 	override def register(user: Account): Task[String] = {
 		for
-			id <- Random.nextUUID
 			_ <- ctx.run {
 				quote {
 					query[AccountTable].insertValue {
-						lift(AccountTable(id.toString, user.balanceFood, user.balanceMeal, user.balanceCash))
+						lift(AccountTable(user.id, user.balanceFood, user.balanceMeal, user.balanceCash))
 					}
 				}
 			}
-		yield id.toString
+		yield user.id.toString
 	}.provide(ZLayer.succeed(ds))
 
-	override def updateFoodBalance(account: Account, balance: Double): Task[String]  =
+	override def update(account: Account): Task[Unit] = {
+		for
+			_ <- ctx.run {
+				quote {
+					query[AccountTable]
+						.filter(p => p.id == lift(account.id))
+						.updateValue(lift(AccountTable(account.id, account.balanceFood, account.balanceMeal, account.balanceCash)))
+				}
+			}
+		yield ()
+	}.provide(ZLayer.succeed(ds))
+
+
+	override def updateFoodBalance(account: Account, balance: BigDecimal): Task[String]  =
 		ctx
 			.run {
 				quote {
@@ -40,20 +52,19 @@ case class PersistentAccountRepository(ds: DataSource) extends AccountRepository
 			.provide(ZLayer.succeed(ds))
 			.map(_.toString)
 
-	override def updateMealBalance(account: Account, balance: Double): Task[String]  =
-		ctx
-			.run {
+	override def updateMealBalance(account: Account, balance: BigDecimal): Task[Unit]  = {
+		for
+			_ <- ctx.run {
 				quote {
-					query[AccountTable]
-						.filter(p => p.id == lift(account.id))
-						.update(_.balanceMeal -> lift(balance))
-						.returning(_.id)
+						query[AccountTable]
+							.filter(p => p.id == lift(account.id))
+							.update(_.balanceMeal -> lift(balance))
+					}
 				}
-			}
-			.provide(ZLayer.succeed(ds))
-			.map(_.toString)
+		yield ()
+	}.provide(ZLayer.succeed(ds))
 
-	override def updateCashBalance(account: Account, balance: Double): Task[String]  =
+	override def updateCashBalance(account: Account, balance: BigDecimal): Task[String]  =
 		ctx
 			.run {
 				quote {

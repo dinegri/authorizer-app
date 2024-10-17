@@ -4,14 +4,14 @@ import zio.*
 import zio.schema.*
 import zio.schema.DeriveSchema.*
 
-case class Transaction(account: String, totalAmount: Double, mcc: String, merchant: String)
+case class Transaction(account: String, totalAmount: BigDecimal, mcc: String, merchant: String)
 
 object Transaction:
 	given Schema[Transaction] = DeriveSchema.gen[Transaction]
 
 trait TransactionRepository:
-  def register(transaction: Transaction): Task[String]
+  def register(transaction: Transaction): Task[Unit]
 
 object TransactionRepository:
-  def register(user: Transaction): ZIO[TransactionRepository, Throwable, String] =
+  def register(user: Transaction): ZIO[TransactionRepository, Throwable, Unit] =
     ZIO.serviceWithZIO[TransactionRepository](_.register(user))
