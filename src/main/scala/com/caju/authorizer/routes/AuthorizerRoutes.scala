@@ -28,7 +28,9 @@ object AuthorizerRoutes:
 								_ => {
 									Response.json(new AuthorizationCode(Unexpected.toString).toJson)
 								},
-								id => Response.json(id.toJson)
+								id => {
+									Response.json(id.toJson)
+								}
 							)
         } yield r
       }

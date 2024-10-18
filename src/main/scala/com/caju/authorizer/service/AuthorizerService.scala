@@ -32,12 +32,13 @@ case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 
 	override def authorize(transaction: Transaction): Task[AuthorizationCode] =
 		for {
-			account  <- accountRepository.lookup(transaction.account)
-			mcc      <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption).foldZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
+			account  <- accountRepository.get(transaction.account).absorb
+			mcc      <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption).foldCauseZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
 			balances <- accountBalanceRepository.balancesMap(transaction.account)
 			update   <- debit(transaction, balances, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
 			_        <- accountBalanceRepository.update(update._1)
 		} yield update._2
+
 
 	private def debit(transaction: Transaction, balances: Map[Balance, AccountBalanceType], mcc: MccCode): Task[(AccountBalance, AuthorizationCode)] =
 		def debitFallback(b: Balance, c: Balance) =
@@ -61,7 +62,6 @@ case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 	}
 
 	private def hasBalance(balance: BigDecimal, amount: BigDecimal): Boolean = balance >= amount
-
 }
 
 object AuthorizerServiceImpl {

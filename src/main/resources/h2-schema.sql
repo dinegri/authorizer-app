@@ -8,9 +8,7 @@ CREATE TABLE IF NOT EXISTS "TransactionTable"(
 
 CREATE TABLE IF NOT EXISTS "AccountTable"(
 	"id" VARCHAR(255) NOT NULL PRIMARY KEY,
-	"userId" VARCHAR(255),
-	"balanceMeal" NUMERIC(20, 2),
-	"balanceCash" NUMERIC(20, 2)
+	"userId" VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS "AccountBalanceTable"(
