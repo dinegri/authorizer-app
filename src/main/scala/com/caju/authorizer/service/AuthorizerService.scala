@@ -40,26 +40,17 @@ case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 		} yield update._2
 
 	private def debit(transaction: Transaction, balances: Map[Balance, AccountBalanceType], mcc: MccCode): Task[(AccountBalance, AuthorizationCode)] =
+		def debitFallback(b: Balance, c: Balance) =
+			if (hasBalance(balances(b).balance, transaction.totalAmount))
+				debitBalance(balances(b), transaction, b)
+			else if (hasBalance(balances(c).balance, transaction.totalAmount))
+				debitBalance(balances(c), transaction, c)
+			else noBalance(balances(mcc.balanceType))
+
 		mcc.balanceType match
-			case Food => {
-				if (hasBalance(balances(Food).balance, transaction.totalAmount))
-					debitBalance(balances(Food), transaction, Balance.Food)
-				else if (hasBalance(transaction.totalAmount, balances(Cash).balance))
-					debitBalance(balances(Cash), transaction, Balance.Cash)
-				else noBalance(balances(mcc.balanceType))
-			}
-			case Meal => {
-				if (hasBalance(balances(Meal).balance, transaction.totalAmount))
-					debitBalance(balances(Meal), transaction, Balance.Meal)
-				else if (hasBalance(balances(Cash).balance, transaction.totalAmount))
-					debitBalance(balances(Cash), transaction, Balance.Cash)
-				else noBalance(balances(mcc.balanceType))
-			}
-			case _ => {
-				if (hasBalance(balances(Cash).balance, transaction.totalAmount))
-					debitBalance(balances(Cash), transaction, Balance.Cash)
-				else noBalance(balances(mcc.balanceType))
-			}
+			case Food => debitFallback(Food, Cash)
+			case Meal => debitFallback(Meal, Cash)
+			case _ => debitFallback(Cash, Cash)
 
 	private def noBalance(balance: AccountBalanceType): Task[(AccountBalance, AuthorizationCode)] =
 		ZIO.succeed(AccountBalance(balance.id, balance.accountId, balance.balanceType.toString, balance.balance),
