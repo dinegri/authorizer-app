@@ -38,7 +38,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("1", 10.00, "5411", "PADARIA DO ZE               SAO PAULO BR")
 				createResponse <- client(
@@ -62,7 +62,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("2", 10, "5811", "PADARIA DO ZE               SAO PAULO BR")
 				createResponse <- client(
@@ -86,7 +86,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("3", 10, "5811", "UBER TRIP                   SAO PAULO BR")
 				createResponse <- client(
@@ -110,7 +110,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("4", 110, "5811", "UBER TRIP                   SAO PAULO BR")
 				createResponse <- client(
@@ -134,7 +134,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("5", 50, "5000", "UBER EATS                   VILA VELA BR")
 				createResponse <- client(
@@ -154,11 +154,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			fixture(accountId = "5")
 		),
 
-		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante e rejeito devido saldo insuficiente") {
+		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante e rejeitar devido saldo insuficiente") {
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("6", 102, "5000", "UBER EATS                   VILA VELA BR")
 				createResponse <- client(
@@ -182,7 +182,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			for {
 				client <- ZIO.service[Client]
 				_ <- TestServer.addRoutes(AuthorizerRoutes())
-				port <- ZIO.serviceWith[Server](_.port)
+				port <- ZIO.serviceWithZIO[Server](_.port)
 				url = URL.root.port(port)
 				transaction = Transaction("11", 102, "6000", "UBER EATS                   CUBATAO BR")
 				createResponse <- client(
