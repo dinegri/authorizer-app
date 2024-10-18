@@ -1,6 +1,6 @@
 package com.caju
 
-import com.caju.authorizer.persistent.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
+import com.caju.authorizer.persistent.{PersistentAccountBalanceRepository, PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
 import com.caju.authorizer.repository.AccountRepository
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.AuthorizerServiceImpl
@@ -16,7 +16,8 @@ object MainApp extends ZIOAppDefault:
       .provide(
         Server.defaultWithPort(8080),
         AuthorizerServiceImpl.layer,
-        PersistentMccRepository.layer,
         PersistentAccountRepository.layer,
+        PersistentAccountBalanceRepository.layer,
+        PersistentMccRepository.layer,
         PersistentTransactionRepository.layer
       )

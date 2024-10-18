@@ -1,8 +1,8 @@
 package com.caju.authorizer
 
-import com.caju.authorizer.persistent.{PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
-import com.caju.authorizer.domain.{Transaction, Account}
-import com.caju.authorizer.repository.AccountRepository
+import com.caju.authorizer.persistent.{PersistentAccountBalanceRepository, PersistentAccountRepository, PersistentMccRepository, PersistentTransactionRepository}
+import com.caju.authorizer.domain.{Account, Balance, AccountBalance, Transaction}
+import com.caju.authorizer.repository.{AccountRepository, AccountBalanceRepository}
 import com.caju.authorizer.routes.AuthorizerRoutes
 import com.caju.authorizer.service.{AuthorizerService, AuthorizerServiceImpl}
 import zio.*
@@ -21,6 +21,18 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			SELECT 5812, 'Meal', 'PADARIA DO ZE               SAO PAULO BR' UNION
 			SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR'
 	*/
+
+	def fixture(accountId: String) = for {
+		ar <- ZIO.service[AccountRepository]
+		abr <- ZIO.service[AccountBalanceRepository]
+		_ <- abr.delete(accountId)
+		_ <- ar.delete(accountId)
+		_ <- ar.register(Account(accountId, 100, 50, 101))
+		_ <- abr.register(AccountBalance(s"1$accountId", accountId, Balance.Food.toString, 100.0))
+		_ <- abr.register(AccountBalance(s"2$accountId", accountId, Balance.Meal.toString, 50.0))
+		_ <- abr.register(AccountBalance(s"3$accountId", accountId, Balance.Cash.toString, 101.0))
+	} yield ()
+
 	override def spec: Spec[Any, Any] = suite("AuthorizerService")(
 		test("Se o mcc for '5411', deve-se utilizar o saldo de FOOD") {
 			for {
@@ -40,13 +52,10 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			AuthorizerServiceImpl.layer,
 			PersistentMccRepository.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("1")
-				_ <- repo.register(Account("1", 100, 50, 101))
-			} yield ()
+			fixture(accountId = "1")
 		),
 
 		test("Se o mcc for '5811', deve-se utilizar o saldo de MEAL") {
@@ -66,14 +75,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			Scope.default,
 			AuthorizerServiceImpl.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("2")
-				_ <- repo.register(Account("2", 100, 50, 101))
-			} yield ()
+			fixture(accountId = "2")
 		),
 
 		test("Para quaisquer outros valores do mcc, deve-se utilizar o saldo de CASH") {
@@ -93,14 +99,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			Scope.default,
 			AuthorizerServiceImpl.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("3")
-				_ <- repo.register(Account("3", 100, 50, 101))
-			} yield ()
+			fixture(accountId = "3")
 		),
 
 		test("Para quaisquer outros valores do mcc, deve-se rejeitar a transação quando saldo para cash não for suficiente") {
@@ -120,14 +123,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			Scope.default,
 			AuthorizerServiceImpl.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("4")
-				_ <- repo.register(Account("4", 100, 50, 101))
-			} yield ()
+			fixture(accountId = "4")
 		),
 
 		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante") {
@@ -147,14 +147,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			Scope.default,
 			AuthorizerServiceImpl.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("5")
-				_ <- repo.register(Account("5", balanceFood = 100, balanceMeal = 50, balanceCash = 101))
-			} yield ()
+			fixture(accountId = "5")
 		),
 
 		test("Quando MCC estiver incorreto encontra a categoria correta pelo nome do comerciante e rejeito devido saldo insuficiente") {
@@ -174,14 +171,11 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			Scope.default,
 			AuthorizerServiceImpl.layer,
 			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
-			for {
-				repo <- ZIO.service[AccountRepository]
-				_ <- repo.delete("6")
-				_ <- repo.register(Account("6", balanceFood = 100, balanceMeal = 50, balanceCash = 101))
-			} yield ()
+			fixture(accountId = "6")
 		)
 	).provide(
 		ZLayer.succeed(Server.Config.default.onAnyOpenPort),
@@ -191,6 +185,7 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 		AuthorizerServiceImpl.layer,
 		PersistentMccRepository.layer,
 		PersistentAccountRepository.layer,
+		PersistentAccountBalanceRepository.layer,
 		PersistentTransactionRepository.layer
 	).provideLayerShared(PersistentAccountRepository.layer)
 
