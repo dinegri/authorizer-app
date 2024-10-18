@@ -25,8 +25,7 @@ object AuthorizerService {
 		ZIO.serviceWithZIO[AuthorizerService](_.authorize(transaction))
 }
 
-case class AuthorizerServiceImpl(
-																	accountRepository: AccountRepository,
+case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 																	accountBalanceRepository: AccountBalanceRepository,
 																	mccRepository: MccRepository,
 																	transactionRepository: TransactionRepository) extends AuthorizerService {
