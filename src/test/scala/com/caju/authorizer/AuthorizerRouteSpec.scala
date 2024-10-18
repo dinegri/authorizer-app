@@ -22,12 +22,12 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR'
 	*/
 
-	def fixture(accountId: String) = for {
+	def fixture(accountId: String): ZIO[AccountBalanceRepository & AccountRepository, Throwable, Unit] = for {
 		ar <- ZIO.service[AccountRepository]
 		abr <- ZIO.service[AccountBalanceRepository]
 		_ <- abr.delete(accountId)
 		_ <- ar.delete(accountId)
-		_ <- ar.register(Account(accountId, 100, 50, 101))
+		_ <- ar.register(Account(accountId, userId = "123"))
 		_ <- abr.register(AccountBalance(s"1$accountId", accountId, Balance.Food.toString, 100.0))
 		_ <- abr.register(AccountBalance(s"2$accountId", accountId, Balance.Meal.toString, 50.0))
 		_ <- abr.register(AccountBalance(s"3$accountId", accountId, Balance.Cash.toString, 101.0))
@@ -176,7 +176,31 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentTransactionRepository.layer
 		) @@ TestAspect.before(
 			fixture(accountId = "6")
+		),
+
+		test("Se acontecer qualquer outro problema que impeça a transação de ser processada retornar {'code': '07'}") {
+			for {
+				client <- ZIO.service[Client]
+				_ <- TestServer.addRoutes(AuthorizerRoutes())
+				port <- ZIO.serviceWith[Server](_.port)
+				url = URL.root.port(port)
+				transaction = Transaction("11", 102, "6000", "UBER EATS                   CUBATAO BR")
+				createResponse <- client(
+					Request.post(url / "transactions", Body.from[Transaction](transaction))
+				)
+				result <- createResponse.body.asString
+			} yield assertTrue(result == "{\"code\":\"07\"}")
+		}.provideSome[Client with Driver with AuthorizerService](
+			TestServer.layer,
+			Scope.default,
+			AuthorizerServiceImpl.layer,
+			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
+			PersistentMccRepository.layer,
+			PersistentTransactionRepository.layer
 		)
+
+
 	).provide(
 		ZLayer.succeed(Server.Config.default.onAnyOpenPort),
 		Client.default,

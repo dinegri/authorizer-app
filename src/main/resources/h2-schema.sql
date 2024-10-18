@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "TransactionTable"(
 
 CREATE TABLE IF NOT EXISTS "AccountTable"(
 	"id" VARCHAR(255) NOT NULL PRIMARY KEY,
-	"balanceFood" NUMERIC(20, 2),
+	"userId" VARCHAR(255),
 	"balanceMeal" NUMERIC(20, 2),
 	"balanceCash" NUMERIC(20, 2)
 );
@@ -33,11 +33,4 @@ INSERT INTO "MccTable" SELECT * FROM (
 	 SELECT 5812, 'Meal', 'PADARIA DO ZE               SAO PAULO BR' UNION
 	 SELECT 1, 'Cash', 'UBER TRIP                   SAO PAULO BR'
  ) x WHERE NOT EXISTS(SELECT * FROM "MccTable");
-/*
-INSERT INTO "AccountBalanceTable" SELECT * FROM (
-	 SELECT 1, '1', 'Food', 100.0 UNION
-	 SELECT 2, '1', 'Meal', 50.0 UNION
-	 SELECT 3, '1', 'Cash', 50.0
- ) x WHERE NOT EXISTS(SELECT * FROM "AccountBalanceTable");
- */
 
