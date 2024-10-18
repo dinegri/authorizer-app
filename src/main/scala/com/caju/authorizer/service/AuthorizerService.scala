@@ -26,9 +26,9 @@ object AuthorizerService {
 }
 
 case class AuthorizerServiceImpl(accountRepository: AccountRepository,
-																	accountBalanceRepository: AccountBalanceRepository,
-																	mccRepository: MccRepository,
-																	transactionRepository: TransactionRepository) extends AuthorizerService {
+		accountBalanceRepository: AccountBalanceRepository,
+		mccRepository: MccRepository,
+		transactionRepository: TransactionRepository) extends AuthorizerService {
 
 	override def authorize(transaction: Transaction): Task[AuthorizationCode] =
 		for {
