@@ -198,6 +198,30 @@ object AuthorizerRouteSpec extends ZIOSpecDefault:
 			PersistentAccountBalanceRepository.layer,
 			PersistentMccRepository.layer,
 			PersistentTransactionRepository.layer
+		),
+
+		test("Se o comerciante não for encontrado consulta o mcc conforme informado na transação") {
+			for {
+				client <- ZIO.service[Client]
+				_ <- TestServer.addRoutes(AuthorizerRoutes())
+				port <- ZIO.serviceWithZIO[Server](_.port)
+				url = URL.root.port(port)
+				transaction = Transaction("1", 10.00, "5411", "PADARIA DO ZE               SAO PAULO BR DOT NOT EXISTS")
+				createResponse <- client(
+					Request.post(url / "transactions", Body.from[Transaction](transaction))
+				)
+				result <- createResponse.body.asString
+			} yield assertTrue(result == "{\"code\":\"00\"}")
+		}.provideSome[Client with Driver with AuthorizerService](
+			TestServer.layer,
+			Scope.default,
+			AuthorizerServiceImpl.layer,
+			PersistentMccRepository.layer,
+			PersistentAccountRepository.layer,
+			PersistentAccountBalanceRepository.layer,
+			PersistentTransactionRepository.layer
+		) @@ TestAspect.before(
+			fixture(accountId = "1")
 		)
 
 

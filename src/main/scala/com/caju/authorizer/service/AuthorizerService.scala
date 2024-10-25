@@ -33,8 +33,10 @@ case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 	override def authorize(transaction: Transaction): Task[AuthorizationCode] =
 		for {
 			account  <- accountRepository.get(transaction.account).absorb
-			mcc      <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption).foldCauseZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
-			balances <- accountBalanceRepository.balancesMap(transaction.account)
+			mcc      <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption)
+			.foldCauseZIO(_ => mccRepository.lookup(transaction.mcc).flatMap(ZIO.fromOption)
+				.foldCauseZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data)), data => ZIO.succeed(data))
+			balances <- accountBalanceRepository.balancesMap(account.id)
 			update   <- debit(transaction, balances, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
 			_        <- accountBalanceRepository.update(update._1)
 		} yield update._2
@@ -75,5 +77,3 @@ object AuthorizerServiceImpl {
 			} yield AuthorizerServiceImpl(accountRepository, accountBalanceRepository, merchantCategoryCodes, transactionRepository)
 		}
 }
-
-
