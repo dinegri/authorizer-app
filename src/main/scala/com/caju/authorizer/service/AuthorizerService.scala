@@ -34,9 +34,8 @@ case class AuthorizerServiceImpl(accountRepository: AccountRepository,
 		for {
 			account  <- accountRepository.get(transaction.account).absorb
 			mcc      <- mccRepository.lookupByMerchantName(transaction.merchant).flatMap(ZIO.fromOption)
-			.foldCauseZIO(_ =>
-				mccRepository.lookup(transaction.mcc).flatMap(ZIO.fromOption).foldCauseZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
-				ZIO.succeed(new MccCash()), data => ZIO.succeed(data))
+			.foldCauseZIO(_ => mccRepository.lookup(transaction.mcc).flatMap(ZIO.fromOption)
+				.foldCauseZIO(_ => ZIO.succeed(new MccCash()), data => ZIO.succeed(data)), data => ZIO.succeed(data))
 			balances <- accountBalanceRepository.balancesMap(account.id)
 			update   <- debit(transaction, balances, MccCode(mcc.code, Balance.valueOf(mcc.balanceType), mcc.merchant))
 			_        <- accountBalanceRepository.update(update._1)
